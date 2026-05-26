@@ -2,6 +2,15 @@
 
 Stack observability all-in-one buat dealtech-code dan project lain. 100% open source, gak ada biaya lisensi.
 
+## 📚 Dokumentasi
+
+| File | Isi |
+|---|---|
+| **README.md** (kamu di sini) | Overview, install, arsitektur |
+| **[INTEGRATION.md](INTEGRATION.md)** | **Cara konek dealtech-code & app lain ke stack ini** (per bahasa, multi-VPS, multi-tim) |
+| **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** | Solusi error umum |
+| **[agent/README.md](agent/README.md)** | Template label & contoh `docker-compose.yml` buat app |
+
 ## Komponen
 
 | Service | Fungsi | Port |
@@ -77,23 +86,36 @@ docker compose up -d
 └────────────────────────────────────────────────────┘
 ```
 
-## Konvensi Label Container
+## 🔌 Konek App ke Stack Ini
 
-Buat dapet metric/log per-tim, kasih label di container app lu:
+Udah install stack-nya tapi belum tau cara nyambungin app (dealtech-code, tim-1..4, atau aplikasi lain)?
+
+**Singkatnya:** kasih label `logging=promtail` di container app lu, terus restart Promtail. Selesai.
 
 ```yaml
-# di docker-compose.yml app dealtech-code
+# docker-compose.yml app lu (contoh dealtech-code tim 1)
 services:
   tim1-app:
+    image: ghcr.io/youruser/dealtech-tim1:latest
     labels:
-      - "team=tim1"
-      - "project=dealtech-code"
-      - "logging=promtail"
+      - "logging=promtail"          # WAJIB - opt-in ke log scraping
+      - "team=tim1"                 # opsional - filter per tim
+      - "project=dealtech-code"     # opsional
+      - "service=api"               # opsional
 ```
 
-Promtail udah dikonfigurasi nyedot log dari container yang punya label `logging=promtail`. Di Grafana lu bisa filter `{team="tim1"}`.
+Di Grafana → **Explore → Loki**, query `{container="tim1-app"}` — log lu udah masuk.
 
-👉 **Panduan integrasi lengkap (per bahasa, multi-VPS, multi-tim):** [INTEGRATION.md](INTEGRATION.md)
+### Skenario yang dicover di [INTEGRATION.md](INTEGRATION.md):
+
+- ✅ **App di VPS yang sama** dengan stack — tinggal label
+- ✅ **App di VPS berbeda** — install Promtail + node-exporter + cAdvisor agent, push log/metrics ke VPS observability (pake Tailscale/WireGuard biar aman)
+- ✅ **Multi-tim isolation** — pattern label `team=` + user terpisah di Grafana per tim
+- ✅ **Best practice logging** — log ke stdout, format JSON, log rotation
+- ✅ **Contoh kode per bahasa** — Node.js (pino/winston), Python (loguru/structlog), PHP/Laravel (monolog), Go (slog), Java/Spring (logback JSON)
+- ✅ **Verifikasi & debugging** — checklist setelah konek + cara cek log/metric kebaca
+
+📖 **Baca lengkap:** [INTEGRATION.md](INTEGRATION.md)
 
 ## Maintenance
 
