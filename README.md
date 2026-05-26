@@ -35,20 +35,23 @@ Cocok buat: startup, dev team, indie hacker, tim engineer yang gak mau ribet obs
 
 ## ✨ Fitur
 
-- 🔍 **Log aggregation** — semua log container masuk Loki, search pake LogQL di Grafana
+- 🔍 **Log aggregation** — semua log masuk Loki, search pake LogQL di Grafana
 - 📊 **Resource monitoring** — CPU/RAM/disk/network per host & per container, real-time
 - 🚨 **Alerting** — 11 rule pre-built (CPU tinggi, OOM-kill, container restart loop, disk penuh, dll), kirim ke Telegram
 - 🏷️ **Multi-tim isolation** — pattern label `team=` buat misahin dashboard per tim
 - 🌐 **Multi-VPS** — agent ringan (~150MB RAM) buat ngirim log/metric dari VPS lain
 - 🔒 **Secure default** — port sensitif bind ke `127.0.0.1`, akses via SSH tunnel
-- 🐳 **Pure Docker Compose** — gak ada Kubernetes, gak ada cloud, gak ada vendor lock-in
+- 🐳 **Docker & Non-Docker** — container pake label, bare metal pake Promtail binary + systemd
+- 🛠️ **Framework-ready** — panduan lengkap buat Laravel, Go, Node.js, Python, Java/Spring
+- 📡 **Multi-source** — file log, journald, syslog, stdout — semua bisa masuk Pantra
 
 ## 📚 Dokumentasi
 
 | File | Isi |
 |---|---|
 | **README.md** (kamu di sini) | Overview, install, arsitektur |
-| **[INTEGRATION.md](INTEGRATION.md)** | **Cara konek app lu ke Pantra** (per bahasa, multi-VPS, multi-tim) |
+| **[INTEGRATION.md](INTEGRATION.md)** | **Cara konek app Docker ke Pantra** (label, multi-VPS, multi-tim) |
+| **[BARE-METAL.md](BARE-METAL.md)** | **Cara konek app non-Docker** (Laravel, Go, Node.js, Python, Java, systemd, syslog) |
 | **[SECURITY.md](SECURITY.md)** | Security policy, threat model, port binding, disclosure |
 | **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** | Solusi error umum |
 | **[LICENSE](LICENSE)** | MIT License |
@@ -145,25 +148,48 @@ docker compose up -d
 
 ## 🔌 Konek App ke Pantra
 
-Udah install Pantra tapi belum tau cara nyambungin app (dealtech-code, tim-1..4, atau aplikasi lain)?
+Pantra support **Docker & non-Docker**. Pilih panduan sesuai setup lu:
 
-**Singkatnya:** kasih label `logging=promtail` di container app lu, terus restart Promtail. Selesai.
+| Setup App Lu | Panduan | Effort |
+|---|---|---|
+| Docker container | [INTEGRATION.md](INTEGRATION.md) | 1 menit (tambahin label) |
+| Bare metal / systemd / PM2 | [BARE-METAL.md](BARE-METAL.md) | 5-10 menit (install Promtail binary) |
+| Multi-VPS (Docker) | [INTEGRATION.md → Skenario 2](INTEGRATION.md#skenario-2-app-di-vps-berbeda) | 10 menit |
+| Multi-VPS (bare metal) | [BARE-METAL.md](BARE-METAL.md) | 10 menit |
+
+### Quick example (Docker):
 
 ```yaml
-# docker-compose.yml app lu
 services:
   myapp:
-    image: ghcr.io/youruser/myapp:latest
     labels:
-      - "logging=promtail"          # WAJIB - opt-in ke log scraping
-      - "team=tim1"                 # opsional - filter per tim
-      - "project=dealtech-code"     # opsional
-      - "service=api"               # opsional
+      - "logging=promtail"
+      - "team=tim1"
 ```
 
-Di Grafana → **Explore → Loki**, query `{container="myapp"}` — log lu udah masuk.
+### Quick example (Non-Docker / bare metal):
 
-📖 **Panduan lengkap:** [INTEGRATION.md](INTEGRATION.md) — cover skenario multi-VPS (Tailscale/WireGuard), multi-tim, contoh kode per bahasa (Node.js, Python, PHP/Laravel, Go, Java), best practice logging, dan checklist verifikasi.
+```bash
+# Install Promtail binary di server app
+curl -LO https://github.com/grafana/loki/releases/download/v3.3.2/promtail-linux-amd64.zip
+unzip promtail-linux-amd64.zip && sudo mv promtail-linux-amd64 /usr/local/bin/promtail
+# Config: point ke file log app + Pantra VPS IP
+sudo systemctl enable --now promtail
+```
+
+### Framework yang udah ada panduannya:
+
+| Framework | Docker | Bare Metal | Log Format |
+|---|---|---|---|
+| **Laravel / PHP** | [INTEGRATION.md](INTEGRATION.md) | [BARE-METAL.md](BARE-METAL.md#laravel-php) | Monolog JSON |
+| **Go** | [INTEGRATION.md](INTEGRATION.md) | [BARE-METAL.md](BARE-METAL.md#go) | slog JSON |
+| **Node.js** | [INTEGRATION.md](INTEGRATION.md) | [BARE-METAL.md](BARE-METAL.md#nodejs-pm2--systemd) | pino JSON |
+| **Python** | [INTEGRATION.md](INTEGRATION.md) | [BARE-METAL.md](BARE-METAL.md#python-gunicorn--uvicorn) | loguru JSON |
+| **Java / Spring** | [INTEGRATION.md](INTEGRATION.md) | [BARE-METAL.md](BARE-METAL.md#java--spring-boot) | logback JSON |
+| **Nginx / Apache** | auto (Docker log) | [BARE-METAL.md](BARE-METAL.md#skenario-1-app-log-ke-file) | access log |
+| **Syslog devices** | — | [BARE-METAL.md](BARE-METAL.md#skenario-3-app-kirim-log-via-syslog) | syslog |
+
+Di Grafana → **Explore → Loki**, query `{host="my-server"}` atau `{app="myapp"}` — log lu udah masuk.
 
 ## 🔧 Maintenance
 
