@@ -9,6 +9,30 @@
 
 Pantra ngumpulin **log + metrics + alert** dari semua container Docker lu, dalam satu stack yang tinggal `git clone` & `./install.sh`. Dirancang buat tim yang butuh observability serius tanpa biaya cloud SaaS.
 
+## 🤔 Apa itu Pantra?
+
+Bayangin server lu lagi lemot, container ada yang restart-restart sendiri, atau user complain error tapi lu gak tau penyebabnya. Lu butuh **3 hal** sekaligus:
+
+1. **Log** — apa yang app lu print sebelum crash?
+2. **Metrics** — CPU/RAM/disk lagi berapa? Container mana yang paling boros?
+3. **Alert** — dapet notif duluan sebelum user yang complain
+
+Biasanya buat dapet 3 itu, lu harus:
+- Bayar Datadog/New Relic ($$$ tiap bulan)
+- Atau setup manual: install Loki, Prometheus, Grafana, Alertmanager, cAdvisor, node-exporter, bikin config-nya satu-satu, bikin dashboard dari nol, tulis alert rule dari pengalaman — **butuh 1-2 minggu**
+
+**Pantra = jalan pintas.** Lu dapet semua itu **dalam 5 menit**, free, self-hosted, gak ada vendor lock-in.
+
+```bash
+git clone https://github.com/cahrur/pantra.git /opt/pantra
+cd /opt/pantra && ./install.sh
+# Selesai. Buka Grafana, dashboard udah jadi.
+```
+
+Pantra **bukan tool baru** — ini stack curated dari 7 proyek open-source kelas dunia (Loki, Prometheus, Grafana, dll), dipaket jadi satu **opinionated setup** yang udah validated buat kasus pemakaian umum: self-hosted infra dengan 1-50 container, multi-tim, multi-VPS.
+
+Cocok buat: startup, dev team, indie hacker, tim engineer yang gak mau ribet observability tapi tetep pengen kontrol penuh atas data mereka.
+
 ## ✨ Fitur
 
 - 🔍 **Log aggregation** — semua log container masuk Loki, search pake LogQL di Grafana
