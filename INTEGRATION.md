@@ -32,7 +32,7 @@ services:
 ### Langkah 2 — Restart Promtail (kalau sebelumnya udah jalan)
 
 ```bash
-cd /opt/log-management
+cd /opt/pantra
 docker compose restart promtail
 ```
 

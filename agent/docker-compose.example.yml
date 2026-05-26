@@ -8,6 +8,7 @@ networks:
     driver: bridge
   # Network shared sama monitoring stack (opsional, kalau app & monitoring satu host)
   observability:
+    name: pantra
     external: true
 
 services:
@@ -20,7 +21,7 @@ services:
       - "3001:3000"
     networks:
       - app-net
-      - observability
+      - observability   # network external dari Pantra
     environment:
       - NODE_ENV=production
       - DATABASE_URL=${DATABASE_URL}

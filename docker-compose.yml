@@ -1,9 +1,9 @@
-name: log-management
+name: pantra
 
 networks:
-  observability:
+  pantra:
     driver: bridge
-    name: observability
+    name: pantra
 
 volumes:
   prometheus_data:
@@ -27,7 +27,7 @@ services:
       - ./loki/loki-config.yaml:/etc/loki/loki-config.yaml:ro
       - loki_data:/loki
     networks:
-      - observability
+      - pantra
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1"]
       interval: 30s
@@ -51,7 +51,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./data/promtail:/tmp
     networks:
-      - observability
+      - pantra
     depends_on:
       - loki
 
@@ -75,7 +75,7 @@ services:
     ports:
       - "${PROMETHEUS_BIND:-127.0.0.1}:${PROMETHEUS_PORT:-9090}:9090"
     networks:
-      - observability
+      - pantra
     healthcheck:
       test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:9090/-/healthy || exit 1"]
       interval: 30s
@@ -96,7 +96,7 @@ services:
       - /sys:/host/sys:ro
       - /:/rootfs:ro
     networks:
-      - observability
+      - pantra
     pid: host
 
   cadvisor:
@@ -115,7 +115,7 @@ services:
     ports:
       - "${CADVISOR_BIND:-127.0.0.1}:${CADVISOR_PORT:-8080}:8080"
     networks:
-      - observability
+      - pantra
     command:
       - '--housekeeping_interval=30s'
       - '--docker_only=true'
@@ -138,7 +138,7 @@ services:
     ports:
       - "${ALERTMANAGER_BIND:-127.0.0.1}:${ALERTMANAGER_PORT:-9093}:9093"
     networks:
-      - observability
+      - pantra
     environment:
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN:-}
       - TELEGRAM_CHAT_ID=${TELEGRAM_CHAT_ID:-}
@@ -163,7 +163,7 @@ services:
     ports:
       - "${GRAFANA_BIND:-0.0.0.0}:${GRAFANA_PORT:-3000}:3000"
     networks:
-      - observability
+      - pantra
     depends_on:
       - prometheus
       - loki

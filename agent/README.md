@@ -4,7 +4,7 @@ Folder ini contoh gimana app container (dealtech-code, tim-1..4, dll) supaya log
 
 ## Cara Pake
 
-### 1. Pastiin app container join ke network `observability` (opsional)
+### 1. Pastiin app container join ke network `pantra` (opsional)
 
 Cara ini paling clean kalau app & monitoring di server yang sama. Di `docker-compose.yml` app lu, tambahin network external:
 
@@ -13,6 +13,7 @@ networks:
   default:
     name: app-internal
   observability:
+    name: pantra        # nama network dari Pantra
     external: true
 ```
 
@@ -88,7 +89,7 @@ Atau pake template variable di dashboard "Logs Explorer".
 ## FAQ
 
 **Q: Gua udah kasih label tapi log gak muncul?**
-A: Restart Promtail: `docker compose restart promtail` di folder log-management. Atau cek `docker compose logs promtail` ada error apa.
+A: Restart Promtail: `docker compose restart promtail` di folder pantra. Atau cek `docker compose logs promtail` ada error apa.
 
 **Q: Container saya log-nya ke file, bukan stdout. Gimana?**
 A: 2 opsi:

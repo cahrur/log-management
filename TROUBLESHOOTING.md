@@ -19,7 +19,7 @@ Volume Loki butuh user 10001:10001. Stack udah ngehandle dengan `user: "10001:10
 
 ```bash
 docker compose down
-docker volume rm log-management_loki_data
+docker volume rm pantra_loki_data
 docker compose up -d
 ```
 
@@ -92,7 +92,7 @@ Kalau mau hapus data lama manual:
 
 ```bash
 docker compose stop loki
-docker run --rm -v log-management_loki_data:/data alpine sh -c 'rm -rf /data/chunks/*'
+docker run --rm -v pantra_loki_data:/data alpine sh -c 'rm -rf /data/chunks/*'
 docker compose start loki
 ```
 
@@ -170,13 +170,13 @@ Backup volume Docker:
 ```bash
 # Backup
 docker run --rm \
-  -v log-management_grafana_data:/data \
+  -v pantra_grafana_data:/data \
   -v $PWD/backups:/backup \
   alpine tar czf /backup/grafana-$(date +%F).tar.gz -C /data .
 
 # Restore
 docker run --rm \
-  -v log-management_grafana_data:/data \
+  -v pantra_grafana_data:/data \
   -v $PWD/backups:/backup \
   alpine sh -c "rm -rf /data/* && tar xzf /backup/grafana-2026-05-27.tar.gz -C /data"
 ```
