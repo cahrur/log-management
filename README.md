@@ -8,8 +8,20 @@ Stack observability all-in-one buat dealtech-code dan project lain. 100% open so
 |---|---|
 | **README.md** (kamu di sini) | Overview, install, arsitektur |
 | **[INTEGRATION.md](INTEGRATION.md)** | **Cara konek dealtech-code & app lain ke stack ini** (per bahasa, multi-VPS, multi-tim) |
+| **[SECURITY.md](SECURITY.md)** | Security policy, threat model, port binding, disclosure |
 | **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** | Solusi error umum |
+| **[LICENSE](LICENSE)** | MIT License |
 | **[agent/README.md](agent/README.md)** | Template label & contoh `docker-compose.yml` buat app |
+
+## ⚠️ Sebelum Deploy
+
+Stack ini **AS-IS** under MIT License. Lu wajib baca [SECURITY.md](SECURITY.md) buat tau:
+
+- Port mana yang aman public, mana yang harus localhost-only
+- Cara akses Prometheus/Alertmanager via SSH tunnel
+- Threat model & known security considerations
+
+Default sekarang: cuma Grafana (port 3000) yang accessible dari luar. Prometheus/Alertmanager/cAdvisor bind ke `127.0.0.1`. Mau ubah? Set `*_BIND=0.0.0.0` di `.env` (tapi pasang reverse proxy + auth dulu).
 
 ## Komponen
 
@@ -42,11 +54,15 @@ nano .env   # ganti GRAFANA_ADMIN_PASSWORD (wajib), Telegram token (opsional)
 chmod +x install.sh
 ./install.sh
 
-# 5. Buka di browser
-# Grafana:      http://VPS_IP:3000  (user: admin, pass: dari .env)
-# Prometheus:   http://VPS_IP:9090
-# Alertmanager: http://VPS_IP:9093
-# cAdvisor:     http://VPS_IP:8080
+# 5. Buka di browser (HARUS dari laptop, bukan public)
+# Grafana:      http://VPS_IP:3000   (public OK, ada login)
+#
+# Service localhost-only - akses via SSH tunnel:
+# ssh -L 9090:127.0.0.1:9090 -L 9093:127.0.0.1:9093 -L 8080:127.0.0.1:8080 user@VPS_IP
+# Lalu buka di browser laptop:
+# Prometheus:   http://localhost:9090
+# Alertmanager: http://localhost:9093
+# cAdvisor:     http://localhost:8080
 ```
 
 ## Update ke versi terbaru
