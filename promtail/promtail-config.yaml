@@ -19,7 +19,7 @@ scrape_configs:
           - localhost
         labels:
           job: varlogs
-          host: ${VPS_HOSTNAME:-vps}
+          host: ${VPS_HOSTNAME}
           __path__: /var/log/*log
 
   # ===== Docker container logs =====
@@ -61,7 +61,7 @@ scrape_configs:
       - target_label: 'job'
         replacement: 'docker'
       - target_label: 'host'
-        replacement: ${VPS_HOSTNAME:-vps}
+        replacement: ${VPS_HOSTNAME}
 
     pipeline_stages:
       # Parse JSON log structure dari Docker

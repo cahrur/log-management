@@ -97,7 +97,8 @@ log "Generating alertmanager config..."
 
 if [[ -n "${TELEGRAM_BOT_TOKEN:-}" && -n "${TELEGRAM_CHAT_ID:-}" ]]; then
   echo "$TELEGRAM_BOT_TOKEN" > alertmanager/telegram_token
-  chmod 600 alertmanager/telegram_token
+  # 644 (bukan 600) supaya alertmanager container (UID 65534) bisa baca
+  chmod 644 alertmanager/telegram_token
 
   cp alertmanager/alertmanager.yml.telegram alertmanager/alertmanager.yml
   sed -i.bak "s|__CHAT_ID__|${TELEGRAM_CHAT_ID}|g" alertmanager/alertmanager.yml
@@ -108,14 +109,15 @@ else
   cp alertmanager/alertmanager.yml.notelegram alertmanager/alertmanager.yml
   # Token file dummy biar mount gak error
   echo "disabled" > alertmanager/telegram_token
-  chmod 600 alertmanager/telegram_token
+  chmod 644 alertmanager/telegram_token
   warn "Telegram kosong - alert cuma masuk ke Alertmanager UI (http://VPS_IP:9093)"
 fi
 
 # ---------- Permissions ----------
 log "Setup permissions..."
 mkdir -p data/promtail
-$SUDO chown -R 10001:10001 data/promtail 2>/dev/null || true
+# Promtail official image jalan sebagai root, tapi kasih world-writable buat aman
+chmod 777 data/promtail
 ok "Permissions OK"
 
 # ---------- Pull images ----------

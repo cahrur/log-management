@@ -34,8 +34,9 @@ scrape_configs:
       - targets: ['cadvisor:8080']
     metric_relabel_configs:
       # Drop metric yang gak penting biar hemat storage
+      # NOTE: container_memory_failures_total dipertahankan buat alert OOM
       - source_labels: [__name__]
-        regex: 'container_(network_tcp_usage_total|tasks_state|memory_failures_total|network_udp_usage_total)'
+        regex: 'container_(network_tcp_usage_total|tasks_state|network_udp_usage_total)'
         action: drop
 
   # Loki (untuk monitor stack itu sendiri)

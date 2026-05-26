@@ -56,7 +56,10 @@ groups:
           description: "CPU {{ $value | humanize }}% > 10 menit"
 
       - alert: ContainerHighMemory
-        expr: (container_memory_working_set_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""} * 100) > 90
+        expr: |
+          (container_memory_working_set_bytes{name!=""}
+            / on(name) (container_spec_memory_limit_bytes{name!=""} > 0)
+          ) * 100 > 90
         for: 5m
         labels:
           severity: warning
@@ -66,24 +69,24 @@ groups:
           description: "Memory {{ $value | humanize }}% dari limit"
 
       - alert: ContainerRestartingFrequently
-        expr: rate(container_start_time_seconds[15m]) > 0
-        for: 15m
+        expr: changes(container_start_time_seconds{name!=""}[15m]) > 2
+        for: 5m
         labels:
           severity: warning
           category: container
         annotations:
           summary: "Container {{ $labels.name }} sering restart"
-          description: "Container restart > 1x dalam 15 menit"
+          description: "Container restart {{ $value }}x dalam 15 menit"
 
       - alert: ContainerOOMKilled
-        expr: increase(container_memory_failures_total{failure_type="oom"}[5m]) > 0
+        expr: increase(container_oom_events_total{name!=""}[5m]) > 0
         for: 0m
         labels:
           severity: critical
           category: container
         annotations:
           summary: "Container {{ $labels.name }} OOM-killed"
-          description: "Out of memory event terdeteksi"
+          description: "Out of memory kill terdeteksi (cek memory limit / leak)"
 
   - name: service_alerts
     interval: 30s

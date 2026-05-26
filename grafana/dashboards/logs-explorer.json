@@ -109,6 +109,7 @@
         "query": "label_values({job=\"docker\"}, container)",
         "refresh": 2,
         "includeAll": true,
+        "allValue": ".+",
         "multi": true,
         "current": {"text": "All", "value": "$__all"}
       },
@@ -120,6 +121,7 @@
         "query": "label_values({job=\"docker\"}, team)",
         "refresh": 2,
         "includeAll": true,
+        "allValue": ".+",
         "multi": true,
         "current": {"text": "All", "value": "$__all"}
       },
