@@ -93,6 +93,8 @@ services:
 
 Promtail udah dikonfigurasi nyedot log dari container yang punya label `logging=promtail`. Di Grafana lu bisa filter `{team="tim1"}`.
 
+👉 **Panduan integrasi lengkap (per bahasa, multi-VPS, multi-tim):** [INTEGRATION.md](INTEGRATION.md)
+
 ## Maintenance
 
 ```bash
