@@ -17,25 +17,36 @@ Stack observability all-in-one buat dealtech-code dan project lain. 100% open so
 ## Quick Start (di VPS)
 
 ```bash
-# 1. Copy folder ini ke VPS
-scp -r log-management/ user@vps:/opt/
+# 1. SSH ke VPS
+ssh user@VPS_IP
 
-# 2. SSH ke VPS, masuk ke folder
-ssh user@vps
+# 2. Clone repo ke /opt
+sudo git clone https://github.com/cahrur/log-management.git /opt/log-management
+sudo chown -R $USER:$USER /opt/log-management
 cd /opt/log-management
 
 # 3. Setup environment
 cp .env.example .env
-nano .env   # edit password Grafana, Telegram bot token, dll
+nano .env   # ganti GRAFANA_ADMIN_PASSWORD (wajib), Telegram token (opsional)
 
 # 4. Jalanin installer
 chmod +x install.sh
 ./install.sh
 
 # 5. Buka di browser
-# Grafana: http://VPS_IP:3000  (default user: admin)
-# Prometheus: http://VPS_IP:9090
+# Grafana:      http://VPS_IP:3000  (user: admin, pass: dari .env)
+# Prometheus:   http://VPS_IP:9090
 # Alertmanager: http://VPS_IP:9093
+# cAdvisor:     http://VPS_IP:8080
+```
+
+## Update ke versi terbaru
+
+```bash
+cd /opt/log-management
+git pull
+docker compose pull
+docker compose up -d
 ```
 
 ## Arsitektur
