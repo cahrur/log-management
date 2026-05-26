@@ -1,0 +1,90 @@
+server:
+  http_listen_port: 9080
+  grpc_listen_port: 0
+  log_level: info
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+    batchwait: 1s
+    batchsize: 1048576
+
+scrape_configs:
+  # ===== System logs (host) =====
+  - job_name: system
+    static_configs:
+      - targets:
+          - localhost
+        labels:
+          job: varlogs
+          host: ${VPS_HOSTNAME:-vps}
+          __path__: /var/log/*log
+
+  # ===== Docker container logs =====
+  - job_name: docker
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      # Drop container yang gak di-opt-in (kecuali label logging=promtail)
+      # Komentari blok ini kalau mau scrape SEMUA container
+      - source_labels: ['__meta_docker_container_label_logging']
+        regex: 'promtail'
+        action: keep
+
+      # Container name
+      - source_labels: ['__meta_docker_container_name']
+        regex: '/(.*)'
+        target_label: 'container'
+
+      # Image name
+      - source_labels: ['__meta_docker_container_log_stream']
+        target_label: 'logstream'
+
+      # Custom labels: team, project, service
+      - source_labels: ['__meta_docker_container_label_team']
+        target_label: 'team'
+      - source_labels: ['__meta_docker_container_label_project']
+        target_label: 'project'
+      - source_labels: ['__meta_docker_container_label_service']
+        target_label: 'service'
+
+      # Compose project
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: 'compose_project'
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'compose_service'
+
+      # Set job
+      - target_label: 'job'
+        replacement: 'docker'
+      - target_label: 'host'
+        replacement: ${VPS_HOSTNAME:-vps}
+
+    pipeline_stages:
+      # Parse JSON log structure dari Docker
+      - json:
+          expressions:
+            stream: stream
+            log: log
+            time: time
+
+      # Set timestamp dari log Docker
+      - timestamp:
+          source: time
+          format: RFC3339Nano
+
+      # Output cuma isi log-nya
+      - output:
+          source: log
+
+      # Auto-detect level dari isi log (untuk filter di Grafana)
+      - match:
+          selector: '{job="docker"}'
+          stages:
+            - regex:
+                expression: '(?i)(?P<level>ERROR|ERR|FATAL|CRITICAL|WARN|WARNING|INFO|DEBUG|TRACE)'
+            - labels:
+                level:

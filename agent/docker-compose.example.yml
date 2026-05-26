@@ -1,0 +1,102 @@
+# Contoh docker-compose.yml buat app dealtech-code (tim-1..4)
+# Copy template ini, sesuaikan dengan app lu
+
+name: dealtech-tim1
+
+networks:
+  app-net:
+    driver: bridge
+  # Network shared sama monitoring stack (opsional, kalau app & monitoring satu host)
+  observability:
+    external: true
+
+services:
+  # === Contoh: API service ===
+  api:
+    image: ghcr.io/youruser/dealtech-tim1-api:latest
+    container_name: tim1-api
+    restart: unless-stopped
+    ports:
+      - "3001:3000"
+    networks:
+      - app-net
+      - observability
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=${DATABASE_URL}
+    labels:
+      # WAJIB: opt-in ke Promtail
+      - "logging=promtail"
+      # Recommended: identifikasi
+      - "team=tim1"
+      - "project=dealtech-code"
+      - "service=api"
+    # Resource limit (penting buat multi-tenant)
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        # Tag biar log file di host gampang dicari
+        tag: "tim1-api"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # === Contoh: Worker / background job ===
+  worker:
+    image: ghcr.io/youruser/dealtech-tim1-worker:latest
+    container_name: tim1-worker
+    restart: unless-stopped
+    networks:
+      - app-net
+    labels:
+      - "logging=promtail"
+      - "team=tim1"
+      - "project=dealtech-code"
+      - "service=worker"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # === Contoh: Database (kalau per tim ada DB sendiri) ===
+  db:
+    image: postgres:16-alpine
+    container_name: tim1-db
+    restart: unless-stopped
+    networks:
+      - app-net
+    environment:
+      - POSTGRES_DB=tim1
+      - POSTGRES_USER=tim1
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - tim1_db_data:/var/lib/postgresql/data
+    labels:
+      - "logging=promtail"
+      - "team=tim1"
+      - "project=dealtech-code"
+      - "service=database"
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+
+volumes:
+  tim1_db_data:

@@ -1,0 +1,11 @@
+# Default no-op config (akan di-overwrite sama install.sh).
+# Jangan edit file ini langsung — edit alertmanager.yml.telegram atau .notelegram.
+
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: 'noop'
+
+receivers:
+  - name: 'noop'

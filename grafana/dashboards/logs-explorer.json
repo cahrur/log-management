@@ -1,0 +1,138 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "id": null,
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Total Log Lines (1h)",
+      "id": 1,
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 0},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"expr": "sum(count_over_time({job=\"docker\"}[1h]))", "refId": "A"}]
+    },
+    {
+      "type": "stat",
+      "title": "Errors (1h)",
+      "id": 2,
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 0},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"expr": "sum(count_over_time({job=\"docker\", level=~\"ERROR|ERR|FATAL|CRITICAL\"}[1h]))", "refId": "A"}],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {"color": "green", "value": null},
+              {"color": "yellow", "value": 10},
+              {"color": "red", "value": 100}
+            ]
+          },
+          "color": {"mode": "thresholds"}
+        }
+      },
+      "options": {"colorMode": "background"}
+    },
+    {
+      "type": "stat",
+      "title": "Warnings (1h)",
+      "id": 3,
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 0},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"expr": "sum(count_over_time({job=\"docker\", level=~\"WARN|WARNING\"}[1h]))", "refId": "A"}],
+      "fieldConfig": {"defaults": {"color": {"mode": "fixed", "fixedColor": "yellow"}}}
+    },
+    {
+      "type": "stat",
+      "title": "Active Containers Logging",
+      "id": 4,
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 0},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"expr": "count(count by (container) (count_over_time({job=\"docker\"}[5m])))", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Log Rate by Level",
+      "id": 5,
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 4},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"expr": "sum by (level) (rate({job=\"docker\"}[1m]))", "legendFormat": "{{level}}", "refId": "A"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Log Rate by Container",
+      "id": 6,
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 4},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"expr": "topk(10, sum by (container) (rate({job=\"docker\"}[1m])))", "legendFormat": "{{container}}", "refId": "A"}]
+    },
+    {
+      "type": "logs",
+      "title": "Recent Errors",
+      "id": 7,
+      "gridPos": {"h": 12, "w": 24, "x": 0, "y": 12},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"expr": "{job=\"docker\", level=~\"ERROR|ERR|FATAL|CRITICAL\", container=~\"$container\"} |~ \"(?i)${filter}\"", "refId": "A"}],
+      "options": {
+        "showLabels": true,
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending",
+        "dedupStrategy": "none"
+      }
+    },
+    {
+      "type": "logs",
+      "title": "Live Stream (filtered)",
+      "id": 8,
+      "gridPos": {"h": 12, "w": 24, "x": 0, "y": 24},
+      "datasource": {"type": "loki", "uid": "loki"},
+      "targets": [{"expr": "{job=\"docker\", container=~\"$container\"} |~ \"(?i)${filter}\"", "refId": "A"}],
+      "options": {
+        "showLabels": true,
+        "showTime": true,
+        "wrapLogMessage": true,
+        "sortOrder": "Descending"
+      }
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["logs", "loki"],
+  "templating": {
+    "list": [
+      {
+        "name": "container",
+        "label": "Container",
+        "type": "query",
+        "datasource": {"type": "loki", "uid": "loki"},
+        "query": "label_values({job=\"docker\"}, container)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {"text": "All", "value": "$__all"}
+      },
+      {
+        "name": "team",
+        "label": "Team",
+        "type": "query",
+        "datasource": {"type": "loki", "uid": "loki"},
+        "query": "label_values({job=\"docker\"}, team)",
+        "refresh": 2,
+        "includeAll": true,
+        "multi": true,
+        "current": {"text": "All", "value": "$__all"}
+      },
+      {
+        "name": "filter",
+        "label": "Filter (text)",
+        "type": "textbox",
+        "current": {"text": "", "value": ""}
+      }
+    ]
+  },
+  "time": {"from": "now-1h", "to": "now"},
+  "title": "Logs Explorer",
+  "uid": "logs-explorer",
+  "version": 1
+}
