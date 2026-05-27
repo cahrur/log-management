@@ -54,8 +54,34 @@ Cocok buat: startup, dev team, indie hacker, tim engineer yang gak mau ribet obs
 | **[BARE-METAL.md](BARE-METAL.md)** | **Cara konek app non-Docker** (Laravel, Go, Node.js, Python, Java, systemd, syslog) |
 | **[SECURITY.md](SECURITY.md)** | Security policy, threat model, port binding, disclosure |
 | **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** | Solusi error umum |
+| **[examples/](examples/)** | **Ready-to-use config** buat Laravel, Go, Node.js, Python, Java Spring, Nginx |
 | **[LICENSE](LICENSE)** | MIT License |
 | **[agent/README.md](agent/README.md)** | Template label & contoh `docker-compose.yml` buat app |
+
+## 🧰 CLI Tools
+
+Pantra dateng dengan beberapa script otomasi:
+
+| Script | Fungsi | Target |
+|---|---|---|
+| `install.sh` | Install Pantra stack (Docker) | VPS utama |
+| `bare-metal-install.sh` | Install Promtail + node-exporter tanpa Docker | Server app (bare metal) |
+| `remote-agent-install.sh` | Install monitoring agent di VPS lain | VPS remote |
+| `pantra-check.sh` | Health check semua service + status report | VPS utama |
+| `uninstall.sh` | Clean uninstall (Docker / bare metal) | Any |
+
+```bash
+# Health check (jalanin kapan aja buat cek status)
+./pantra-check.sh
+
+# Install agent di VPS remote
+scp remote-agent-install.sh user@REMOTE_VPS:/tmp/
+ssh user@REMOTE_VPS 'chmod +x /tmp/remote-agent-install.sh && /tmp/remote-agent-install.sh'
+
+# Install bare metal (tanpa Docker)
+scp bare-metal-install.sh user@APP_SERVER:/tmp/
+ssh user@APP_SERVER 'chmod +x /tmp/bare-metal-install.sh && /tmp/bare-metal-install.sh'
+```
 
 ## ⚠️ Sebelum Deploy
 
