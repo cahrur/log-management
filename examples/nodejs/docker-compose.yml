@@ -1,0 +1,106 @@
+# Contoh docker-compose.yml - Node.js App dengan Pantra
+# Pakai pino untuk JSON structured logging
+
+name: myapp-nodejs
+
+networks:
+  app-net:
+    driver: bridge
+  observability:
+    name: pantra
+    external: true
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: node-api
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    networks:
+      - app-net
+      - observability
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - PORT=3000
+      - DATABASE_URL=${DATABASE_URL}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    labels:
+      - "logging=promtail"
+      - "team=${TEAM_NAME:-backend}"
+      - "project=${PROJECT_NAME:-myapp}"
+      - "service=node-api"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+        tag: "node-api"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # Background worker (Bull/BullMQ)
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: node-worker
+    restart: unless-stopped
+    command: ["node", "src/worker.js"]
+    networks:
+      - app-net
+      - observability
+    environment:
+      - NODE_ENV=${NODE_ENV:-production}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+    labels:
+      - "logging=promtail"
+      - "team=${TEAM_NAME:-backend}"
+      - "project=${PROJECT_NAME:-myapp}"
+      - "service=node-worker"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7-alpine
+    container_name: node-redis
+    restart: unless-stopped
+    networks:
+      - app-net
+    labels:
+      - "logging=promtail"
+      - "team=${TEAM_NAME:-backend}"
+      - "project=${PROJECT_NAME:-myapp}"
+      - "service=redis"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3

@@ -197,4 +197,11 @@ cat <<EOF
 
 📖 Lihat README.md, TROUBLESHOOTING.md, dan agent/README.md.
 
+📦 Script tambahan:
+   - pantra-check.sh          → Health check semua service
+   - remote-agent-install.sh  → Install agent di VPS remote
+   - bare-metal-install.sh    → Install tanpa Docker (systemd)
+   - uninstall.sh             → Clean uninstall
+   - examples/                → Contoh integrasi (Laravel, Go, Node, Python, dll)
+
 EOF

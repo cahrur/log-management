@@ -1,0 +1,86 @@
+# Contoh docker-compose.yml - Go App dengan Pantra
+# Copy ke project Go lu, sesuaikan sesuai kebutuhan
+
+name: myapp-golang
+
+networks:
+  app-net:
+    driver: bridge
+  observability:
+    name: pantra
+    external: true
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: go-api
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    networks:
+      - app-net
+      - observability
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - APP_PORT=8080
+      - DB_DSN=${DB_DSN}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_FORMAT=json
+    labels:
+      - "logging=promtail"
+      - "team=${TEAM_NAME:-backend}"
+      - "project=${PROJECT_NAME:-myapp}"
+      - "service=go-api"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 256M
+        reservations:
+          memory: 64M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+        tag: "go-api"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:8080/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # Background worker (opsional)
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: go-worker
+    restart: unless-stopped
+    command: ["/app", "-mode=worker"]
+    networks:
+      - app-net
+      - observability
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - DB_DSN=${DB_DSN}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - LOG_FORMAT=json
+    labels:
+      - "logging=promtail"
+      - "team=${TEAM_NAME:-backend}"
+      - "project=${PROJECT_NAME:-myapp}"
+      - "service=go-worker"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

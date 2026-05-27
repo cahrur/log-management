@@ -1,0 +1,101 @@
+# Contoh docker-compose.yml - Python/FastAPI App dengan Pantra
+# Pakai loguru untuk JSON structured logging
+
+name: myapp-python
+
+networks:
+  app-net:
+    driver: bridge
+  observability:
+    name: pantra
+    external: true
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: python-api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    networks:
+      - app-net
+      - observability
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - DATABASE_URL=${DATABASE_URL}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - WORKERS=${WORKERS:-4}
+    labels:
+      - "logging=promtail"
+      - "team=${TEAM_NAME:-backend}"
+      - "project=${PROJECT_NAME:-myapp}"
+      - "service=python-api"
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+        reservations:
+          memory: 128M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+        tag: "python-api"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # Celery worker (opsional)
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: python-worker
+    restart: unless-stopped
+    command: celery -A app.celery worker --loglevel=info --concurrency=2
+    networks:
+      - app-net
+      - observability
+    environment:
+      - APP_ENV=${APP_ENV:-production}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379/0}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    labels:
+      - "logging=promtail"
+      - "team=${TEAM_NAME:-backend}"
+      - "project=${PROJECT_NAME:-myapp}"
+      - "service=python-worker"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7-alpine
+    container_name: python-redis
+    restart: unless-stopped
+    networks:
+      - app-net
+    labels:
+      - "logging=promtail"
+      - "team=${TEAM_NAME:-backend}"
+      - "project=${PROJECT_NAME:-myapp}"
+      - "service=redis"
+    deploy:
+      resources:
+        limits:
+          memory: 128M
