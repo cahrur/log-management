@@ -52,6 +52,7 @@ Cocok buat: startup, dev team, indie hacker, tim engineer yang gak mau ribet obs
 | **README.md** (kamu di sini) | Overview, install, arsitektur |
 | **[INTEGRATION.md](INTEGRATION.md)** | **Cara konek app Docker ke Pantra** (label, multi-VPS, multi-tim) |
 | **[BARE-METAL.md](BARE-METAL.md)** | **Cara konek app non-Docker** (Laravel, Go, Node.js, Python, Java, systemd, syslog) |
+| **[SHARED-HOSTING.md](SHARED-HOSTING.md)** | **Cara konek app dari shared hosting** (push via Loki API, tanpa root/Docker) |
 | **[SECURITY.md](SECURITY.md)** | Security policy, threat model, port binding, disclosure |
 | **[TROUBLESHOOTING.md](TROUBLESHOOTING.md)** | Solusi error umum |
 | **[examples/](examples/)** | **Ready-to-use config** buat Laravel, Go, Node.js, Python, Java Spring, Nginx |
@@ -182,6 +183,7 @@ Pantra support **Docker & non-Docker**. Pilih panduan sesuai setup lu:
 | Bare metal / systemd / PM2 | [BARE-METAL.md](BARE-METAL.md) | 5-10 menit (install Promtail binary) |
 | Multi-VPS (Docker) | [INTEGRATION.md → Skenario 2](INTEGRATION.md#skenario-2-app-di-vps-berbeda) | 10 menit |
 | Multi-VPS (bare metal) | [BARE-METAL.md](BARE-METAL.md) | 10 menit |
+| Shared hosting (cPanel/Plesk) | [SHARED-HOSTING.md](SHARED-HOSTING.md) | 10-15 menit (push via Loki API) |
 
 ### Quick example (Docker):
 
@@ -214,6 +216,7 @@ sudo systemctl enable --now promtail
 | **Java / Spring** | [INTEGRATION.md](INTEGRATION.md) | [BARE-METAL.md](BARE-METAL.md#java--spring-boot) | logback JSON |
 | **Nginx / Apache** | auto (Docker log) | [BARE-METAL.md](BARE-METAL.md#skenario-1-app-log-ke-file) | access log |
 | **Syslog devices** | — | [BARE-METAL.md](BARE-METAL.md#skenario-3-app-kirim-log-via-syslog) | syslog |
+| **Any (shared hosting)** | [SHARED-HOSTING.md](SHARED-HOSTING.md) | [SHARED-HOSTING.md](SHARED-HOSTING.md) | Any JSON |
 
 Di Grafana → **Explore → Loki**, query `{host="my-server"}` atau `{app="myapp"}` — log lu udah masuk.
 

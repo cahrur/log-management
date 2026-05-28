@@ -460,6 +460,22 @@ Kalau ada yang gagal, cek `TROUBLESHOOTING.md`.
 
 ---
 
+## Skenario 3: App di Shared Hosting (Tanpa Docker & Tanpa Root)
+
+Kalau app lu di shared hosting (cPanel, Plesk, Niagahoster, Hostinger, dll) yang gak punya akses root, Docker, atau systemd — lu tetep bisa kirim log ke Pantra.
+
+Strateginya: **push log langsung ke Loki via HTTP API** dari kode app lu.
+
+👉 **Panduan lengkap: [SHARED-HOSTING.md](SHARED-HOSTING.md)**
+
+Highlight:
+- Custom log handler (Laravel/PHP, Node.js, Python, Go) yang push ke Loki endpoint
+- Expose Loki via reverse proxy + Basic Auth
+- Alternatif batch upload via cron
+- Gak perlu install apa-apa di server shared hosting
+
+---
+
 ## Disable Logging buat Container Tertentu
 
 Default-nya cuma container ber-label `logging=promtail` yang di-scrape. Container tanpa label otomatis di-skip — bagus buat skip noise (misal database log yang verbose).
