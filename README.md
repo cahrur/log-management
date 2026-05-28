@@ -301,6 +301,70 @@ Terima kasih ke maintainer & contributor proyek-proyek di atas. Tanpa mereka, Pa
 
 ---
 
+## 🤖 AI-Assisted Setup
+
+Punya AI coding agent (Cursor, Copilot, Claude, ChatGPT, dll)? Copy-paste prompt di bawah ini ke AI lu, dan dia bakal bantu konfigurasi Pantra sesuai setup lu.
+
+### Prompt untuk Install Pantra di VPS
+
+```
+Saya mau install Pantra (observability stack: Loki + Grafana + Prometheus + Alertmanager) di VPS saya.
+
+Repo: https://github.com/cahrur/pantra
+
+Lakukan:
+1. Clone repo ke /opt/pantra
+2. Copy .env.example ke .env
+3. Set GRAFANA_ADMIN_PASSWORD ke password yang strong
+4. (Opsional) Set TELEGRAM_BOT_TOKEN dan TELEGRAM_CHAT_ID untuk alerting
+5. Jalankan ./install.sh
+6. Verifikasi semua service running dengan ./pantra-check.sh
+
+Info VPS saya:
+- OS: [Ubuntu/Debian/CentOS]
+- RAM: [misal 4GB]
+- Sudah ada Docker: [ya/belum]
+```
+
+### Prompt untuk Konek App ke Pantra
+
+```
+Saya mau menghubungkan aplikasi saya ke Pantra (observability stack) yang sudah jalan di VPS.
+
+Repo Pantra: https://github.com/cahrur/pantra
+Baca file: INTEGRATION.md, BARE-METAL.md, atau SHARED-HOSTING.md (sesuai setup saya)
+
+Setup saya:
+- App: [Laravel/Go/Node.js/Python/Java]
+- Deployment: [Docker di VPS yang sama / Docker di VPS berbeda / Bare metal (systemd) / Shared hosting]
+- Pantra VPS IP: [IP address]
+
+Lakukan:
+1. Tentukan panduan mana yang cocok (INTEGRATION.md / BARE-METAL.md / SHARED-HOSTING.md)
+2. Konfigurasi app saya supaya log masuk ke Pantra
+3. Verifikasi log muncul di Grafana
+```
+
+### Prompt untuk Troubleshoot
+
+```
+Pantra (observability stack) saya ada masalah.
+
+Repo: https://github.com/cahrur/pantra
+Baca file: TROUBLESHOOTING.md
+
+Gejala: [jelaskan masalahnya, misal "log gak muncul di Grafana" atau "container loki restart terus"]
+
+Lakukan:
+1. Jalankan ./pantra-check.sh dan analisa output
+2. Cek docker compose logs [service yang bermasalah]
+3. Diagnosa dan fix masalahnya
+```
+
+> **Tip:** Semakin spesifik info yang lu kasih (OS, versi, error message), semakin akurat AI-nya bantu.
+
+---
+
 ## 🤝 Contributing
 
 Pantra masih beta. Kontribusi welcome:
