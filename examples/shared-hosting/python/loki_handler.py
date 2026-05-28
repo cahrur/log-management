@@ -73,14 +73,18 @@ class LokiHandler(logging.Handler):
         entries = self.buffer[:]
         self.buffer = []
 
-        streams = []
+        # Group by label set for better Loki performance
+        grouped = {}
         for record in entries:
             labels = {**self.labels, 'level': record.levelname.lower()}
+            key = json.dumps(labels, sort_keys=True)
+            if key not in grouped:
+                grouped[key] = {'stream': labels, 'values': []}
             ts = str(int(record.created * 1e9))
             msg = self.format(record) if self.formatter else record.getMessage()
-            streams.append({'stream': labels, 'values': [[ts, msg]]})
+            grouped[key]['values'].append([ts, msg])
 
-        payload = json.dumps({'streams': streams}).encode()
+        payload = json.dumps({'streams': list(grouped.values())}).encode()
         req = Request(self.url, data=payload, method='POST')
         req.add_header('Content-Type', 'application/json')
         if self.auth:

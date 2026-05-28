@@ -46,12 +46,18 @@ class LokiTransport {
     if (this.buffer.length === 0) return;
     const entries = this.buffer.splice(0);
 
-    const streams = entries.map(({ ts, line, level }) => ({
-      stream: { ...this.labels, level },
-      values: [[ts, line]],
-    }));
+    // Group by label set for better Loki performance
+    const grouped = new Map();
+    for (const { ts, line, level } of entries) {
+      const labels = { ...this.labels, level };
+      const key = JSON.stringify(labels);
+      if (!grouped.has(key)) {
+        grouped.set(key, { stream: labels, values: [] });
+      }
+      grouped.get(key).values.push([ts, line]);
+    }
 
-    const payload = JSON.stringify({ streams });
+    const payload = JSON.stringify({ streams: [...grouped.values()] });
     const options = {
       method: 'POST',
       hostname: this.url.hostname,

@@ -57,7 +57,8 @@ class LokiHandler extends AbstractProcessingHandler
             return;
         }
 
-        $streams = [];
+        // Group entries by label set for better Loki performance
+        $grouped = [];
         foreach ($this->buffer as $record) {
             $labels = array_merge($this->labels, [
                 'level' => strtolower($record->level->name),
@@ -69,16 +70,17 @@ class LokiHandler extends AbstractProcessingHandler
                 $message .= ' ' . json_encode($record->context);
             }
 
-            $streams[] = [
-                'stream' => $labels,
-                'values' => [[
-                    (string)(intval($record->datetime->format('U.u') * 1e9)),
-                    $message,
-                ]],
+            $key = json_encode($labels);
+            if (!isset($grouped[$key])) {
+                $grouped[$key] = ['stream' => $labels, 'values' => []];
+            }
+            $grouped[$key]['values'][] = [
+                (string)(intval($record->datetime->format('U.u') * 1e9)),
+                $message,
             ];
         }
 
-        $payload = json_encode(['streams' => $streams]);
+        $payload = json_encode(['streams' => array_values($grouped)]);
         $this->send($payload);
         $this->buffer = [];
     }

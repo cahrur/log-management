@@ -208,7 +208,8 @@ class LokiHandler extends AbstractProcessingHandler
             return;
         }
 
-        $streams = [];
+        // Group entries by label set for better Loki performance
+        $grouped = [];
         foreach ($this->buffer as $record) {
             $labels = array_merge($this->labels, [
                 'level' => strtolower($record->level->name),
@@ -220,16 +221,17 @@ class LokiHandler extends AbstractProcessingHandler
                 $message .= ' ' . json_encode($record->context);
             }
 
-            $streams[] = [
-                'stream' => $labels,
-                'values' => [[
-                    (string)(intval($record->datetime->format('U.u') * 1e9)),
-                    $message,
-                ]],
+            $key = json_encode($labels);
+            if (!isset($grouped[$key])) {
+                $grouped[$key] = ['stream' => $labels, 'values' => []];
+            }
+            $grouped[$key]['values'][] = [
+                (string)(intval($record->datetime->format('U.u') * 1e9)),
+                $message,
             ];
         }
 
-        $payload = json_encode(['streams' => $streams]);
+        $payload = json_encode(['streams' => array_values($grouped)]);
         $this->send($payload);
         $this->buffer = [];
     }
@@ -339,12 +341,18 @@ class LokiTransport {
     if (this.buffer.length === 0) return;
     const entries = this.buffer.splice(0);
 
-    const streams = entries.map(({ ts, line, level }) => ({
-      stream: { ...this.labels, level },
-      values: [[ts, line]],
-    }));
+    // Group by label set for better Loki performance
+    const grouped = new Map();
+    for (const { ts, line, level } of entries) {
+      const labels = { ...this.labels, level };
+      const key = JSON.stringify(labels);
+      if (!grouped.has(key)) {
+        grouped.set(key, { stream: labels, values: [] });
+      }
+      grouped.get(key).values.push([ts, line]);
+    }
 
-    const payload = JSON.stringify({ streams });
+    const payload = JSON.stringify({ streams: [...grouped.values()] });
     const options = {
       method: 'POST',
       hostname: this.url.hostname,
@@ -446,14 +454,18 @@ class LokiHandler(logging.Handler):
         entries = self.buffer[:]
         self.buffer = []
 
-        streams = []
+        # Group by label set for better Loki performance
+        grouped = {}
         for record in entries:
             labels = {**self.labels, 'level': record.levelname.lower()}
+            key = json.dumps(labels, sort_keys=True)
+            if key not in grouped:
+                grouped[key] = {'stream': labels, 'values': []}
             ts = str(int(record.created * 1e9))
             msg = self.format(record) if self.formatter else record.getMessage()
-            streams.append({'stream': labels, 'values': [[ts, msg]]})
+            grouped[key]['values'].append([ts, msg])
 
-        payload = json.dumps({'streams': streams}).encode()
+        payload = json.dumps({'streams': list(grouped.values())}).encode()
         req = Request(self.url, data=payload, method='POST')
         req.add_header('Content-Type', 'application/json')
         if self.auth:
