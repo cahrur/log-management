@@ -215,13 +215,6 @@ class LokiHandler extends AbstractProcessingHandler
                 'channel' => $record->channel,
             ]);
 
-            $labelStr = '{';
-            $parts = [];
-            foreach ($labels as $k => $v) {
-                $parts[] = $k . '="' . addslashes($v) . '"';
-            }
-            $labelStr .= implode(',', $parts) . '}';
-
             $message = $record->formatted ?? $record->message;
             if (!empty($record->context)) {
                 $message .= ' ' . json_encode($record->context);
@@ -502,7 +495,6 @@ package lokipush
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"strconv"
 	"sync"
@@ -511,7 +503,8 @@ import (
 
 type Client struct {
 	url      string
-	auth     string
+	user     string
+	pass     string
 	labels   map[string]string
 	buffer   []entry
 	mu       sync.Mutex
@@ -533,7 +526,8 @@ func New(lokiURL, username, password string, labels map[string]string) *Client {
 		client:  &http.Client{Timeout: 3 * time.Second},
 	}
 	if username != "" && password != "" {
-		c.auth = username + ":" + password
+		c.user = username
+		c.pass = password
 	}
 	go c.autoFlush(5 * time.Second)
 	return c
@@ -582,8 +576,8 @@ func (c *Client) flush() {
 	body, _ := json.Marshal(map[string]interface{}{"streams": streams})
 	req, _ := http.NewRequest("POST", c.url, bytes.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
-	if c.auth != "" {
-		req.SetBasicAuth(c.labels["app"], c.auth) // simplified
+	if c.user != "" {
+		req.SetBasicAuth(c.user, c.pass)
 	}
 	c.client.Do(req) //nolint:errcheck
 }
