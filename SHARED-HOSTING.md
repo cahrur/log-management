@@ -329,7 +329,7 @@ class LokiTransport {
   }
 
   log(level, message, meta = {}) {
-    const ts = (Date.now() * 1e6).toString(); // nanoseconds
+    const ts = Date.now() + '000000'; // ms -> ns via string concat (avoids Number overflow)
     const line = JSON.stringify({ level, msg: message, ...meta });
     this.buffer.push({ ts, line, level });
     if (this.buffer.length >= this.batchSize) this.flush();
@@ -642,8 +642,9 @@ $lines = file($logFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
 if (empty($lines)) exit;
 
 $values = [];
-foreach ($lines as $line) {
-    $values[] = [(string)(time() * 1000000000), $line];
+$baseTime = (int)(microtime(true) * 1e9);
+foreach ($lines as $i => $line) {
+    $values[] = [(string)($baseTime + $i * 1000), $line]; // unique ns timestamp per line
 }
 
 $payload = json_encode([

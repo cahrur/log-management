@@ -31,7 +31,7 @@ class LokiTransport {
   }
 
   log(level, message, meta = {}) {
-    const ts = (Date.now() * 1e6).toString(); // nanoseconds
+    const ts = Date.now() + '000000'; // ms -> ns via string concat (avoids Number overflow)
     const line = JSON.stringify({ level, msg: message, ...meta });
     this.buffer.push({ ts, line, level });
     if (this.buffer.length >= this.batchSize) this.flush();
